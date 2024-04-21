@@ -1,0 +1,15 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+
+# Build artifacts
+bin/
+obj/
+
+# Temporary and generated files
+*.pdb
+*.tmp
+*.log
+*.bak
+Thumbs.db
