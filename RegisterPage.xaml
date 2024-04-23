@@ -1,0 +1,48 @@
+﻿<Page x:Class="Memoryboard.RegisterPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="RegisterPage">
+
+    <Page.Background>
+        <SolidColorBrush Color="{DynamicResource MaterialDesignPaper}" />
+    </Page.Background>
+
+
+    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+        <StackPanel>
+            <TextBlock Text="Register" FontSize="24" HorizontalAlignment="Center" Margin="10" Foreground="Beige" FontFamily="Yu Gothic UI Semibold"/>
+
+            <TextBlock Text="Email" Foreground="Beige" FontFamily="Yu Gothic UI"/>
+            <TextBox x:Name="EmailTextBox" Width="200" Margin="5" TextChanged="TextBox_TextChanged"/>
+            <TextBlock x:Name="EmailErrorMessage" Text="" Margin="5,0,0,10"
+                Foreground="#FFF1B459" FontFamily="Yu Gothic UI" FontSize="9"/>
+
+            <TextBlock Text="Password" Foreground="Beige" FontFamily="Yu Gothic UI"/>
+            <PasswordBox x:Name="PasswordBox" Width="200" Margin="5" PasswordChanged="TextBox_PasswordChanged"/>
+            <TextBlock x:Name="PasswordErrorMessage" Text="" Margin="5,0,0,10"
+                       Foreground="#FFF1B459" FontFamily="Yu Gothic UI" FontSize="9"/>
+
+            <TextBlock Text="Confirm Password" Foreground="Beige" FontFamily="Yu Gothic UI"/>
+            <PasswordBox x:Name="ConfirmPasswordBox" Width="200" Margin="5" PasswordChanged="TextBox_PasswordChanged"/>
+            <TextBlock x:Name="ConfirmPasswordErrorMessage" Text="" Margin="5,0,0,5"
+                Foreground="#FFF1B459" FontFamily="Yu Gothic UI" FontSize="9"/>
+            
+
+            <Button x:Name="RegisterButton" Content="Register" Click="RegisterButton_Click" Margin="10,10,10,5" Foreground="Beige" 
+                HorizontalAlignment="Center"  Style="{DynamicResource MaterialDesignFlatButton}"
+                Background="#FF454545" IsEnabled="{Binding CanRegister, RelativeSource={RelativeSource AncestorType=Page}}"/>
+
+            <TextBlock HorizontalAlignment="Center" Margin="10">
+            <Hyperlink Click="LoginLink_Click">
+                <TextBlock Text="or login with an existing account" Foreground="#FF4EF5F5"/>
+            </Hyperlink>
+        </TextBlock>
+
+            <TextBlock x:Name="RegisterMessage" Text="" Foreground="#FFF1B459" HorizontalAlignment="Center" Margin="5"/>
+        </StackPanel>
+    </Grid>
+</Page>

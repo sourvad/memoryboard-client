@@ -10,29 +10,6 @@
         Title="MainWindow" Height="450" Width="350"
         Icon="Assets/memoryboard.ico">
 
-    <Window.Resources>
-        <Style x:Key="ThinScrollBar" TargetType="{x:Type ScrollBar}">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type ScrollBar}">
-                        <Track x:Name="PART_Track" IsDirectionReversed="True" OpacityMask="Gold">
-                            <Track.Thumb>
-                                <Thumb Width="3"  Background="Gold" Foreground="#FFFFD700" BorderBrush="Gold"/>
-                            </Track.Thumb>
-                            <Track.DecreaseRepeatButton>
-                                <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0"/>
-                            </Track.DecreaseRepeatButton>
-                            <Track.IncreaseRepeatButton>
-                                <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0"/>
-                            </Track.IncreaseRepeatButton>
-                        </Track>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <SolidColorBrush x:Key="WindowBackgroundColor" Color="{DynamicResource MaterialDesignPaper}" />
-    </Window.Resources>
-
     <Window.Background>
         <SolidColorBrush Color="{DynamicResource MaterialDesignPaper}" />
     </Window.Background>
@@ -63,31 +40,10 @@
             </Border>
         </materialDesign:ColorZone>
 
-        <!-- The ListBox for the clipboard history as the second row in the grid -->
-        <ListBox x:Name="ClipboardList" Margin="10" 
-                 MouseUp="ClipboardList_MouseUp"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 Grid.Row="1" d:ItemsSource="{d:SampleData ItemCount=5}" Background="#FF1A1A1A" 
-                 FontFamily="Yu Gothic UI" FontSize="16" HorizontalContentAlignment="Stretch" BorderBrush="#FF1A1A1A"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto">
-            
-            <ListBox.Resources>
-                <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource ThinScrollBar}" />
-            </ListBox.Resources>
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <materialDesign:Card Padding="2" Margin="0,4,0,4" HorizontalAlignment="Stretch" Height="70">
-                        <TextBlock Text="{Binding}" Foreground="Beige" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
-                    </materialDesign:Card>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-
-        <!-- Clear All Button -->
-        <Button Content="Clear All" Style="{DynamicResource MaterialDesignFlatButton}" 
-            VerticalAlignment="Bottom" HorizontalAlignment="Right"
-            Foreground="Beige" Background="#FF454545"
-            Click="ClearAll_Click" ClickMode="Press"
-            Grid.Row="2" Margin="0,0,10,10"/>
+        <Frame x:Name="ContentPlaceholder"
+               Grid.Row="1"
+               NavigationUIVisibility="Hidden" 
+               HorizontalAlignment="Stretch" 
+               VerticalAlignment="Stretch"/>
     </Grid>
 </Window>
