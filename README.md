@@ -8,8 +8,18 @@ The Memoryboard client is a Windows-based clipboard management application that 
 
 ## How to Use
 1. Clone the repository
-1. Run ```install.ps1``` in the ```ClientSetup``` folder (these are just the built files)
+1. Run ```ClientSetup/install.ps1``` (these are just the built files) in an admin Powershell window
 1. The script will add Memoryboard to your Program Files (x86) and to your startup folder, and start the application
 1. To bring up the UI, press the keys ```SHIFT + ALT + Z```
 1. Click on an item in the UI, or anywhere outside it to hide the UI
 1. When you click on an item, the application will attempt to paste the selected item in the last focussed window
+
+## Gallery
+### Login Screen
+![Screenshot of the application](./ReadmeAssets/Login.png)
+
+### Registration Screen
+![Screenshot of the application](./ReadmeAssets/Register.png)
+
+### Main Screen
+![Screenshot of the application](./ReadmeAssets/Main.png)

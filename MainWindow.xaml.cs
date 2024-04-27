@@ -15,6 +15,12 @@ namespace Memoryboard
     /// </summary>
     public partial class MainWindow : Window
     {
+        private const int WM_CLIPBOARDUPDATE = 0x031D;
+        private const int MOD_SHIFT = 0x4; 
+        private const int MOD_ALT = 0x1;   
+        private const int VK_Z = 0x5A;     
+        private const int WM_HOTKEY = 0x0312;
+
         private readonly HttpClient _httpClient;
         private readonly ClipboardPage _clipboardPage;
         private readonly LoginPage _loginPage;
@@ -22,16 +28,11 @@ namespace Memoryboard
         private readonly string _tokenFilePath;
         private readonly string _passwordFilePath;
 
-        private const int WM_CLIPBOARDUPDATE = 0x031D;
-        private const int MOD_SHIFT = 0x4; 
-        private const int MOD_ALT = 0x1;   
-        private const int VK_Z = 0x5A;     
-        private const int WM_HOTKEY = 0x0312;
-
         private ClipboardSignalRClient _signalRClient;
-        private IntPtr windowHandle;
         private byte[] _userPasswordBytes;
         private string _token;
+        private nint _windowHandle;
+        private bool _isHookAdded;
 
         [LibraryImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -73,6 +74,7 @@ namespace Memoryboard
             }
 
             _httpClient = HttpClientSingleton.Instance;
+            _isHookAdded = false;
         }
 
         public void StoreToken(string token)
@@ -97,6 +99,12 @@ namespace Memoryboard
 
             await InitSignalRClient();
             await GetUserClipboard();
+
+            if (!_isHookAdded)
+            {
+                _isHookAdded = true;
+                HwndSource.FromHwnd(_windowHandle)?.AddHook(WndProc);
+            }
         }
 
         public void NavigateTo(Pages page)
@@ -117,11 +125,16 @@ namespace Memoryboard
 
         public async void Logout()
         {
+            if (_isHookAdded)
+            {
+                _isHookAdded = false;
+                HwndSource.FromHwnd(_windowHandle)?.RemoveHook(WndProc);
+            }
+
             await DisposeSignalRClient();
             DeletePassword();
             DeleteToken();
             ContentPlaceholder.Navigate(_loginPage);
-            _userPasswordBytes = null;
         }
 
         private void DeleteToken()
@@ -269,20 +282,24 @@ namespace Memoryboard
 
         private async void OnLoaded(object sender, RoutedEventArgs e)
         {
-            windowHandle = new WindowInteropHelper(this).Handle;
-            HwndSource.FromHwnd(windowHandle)?.AddHook(WndProc);        
+            _windowHandle = new WindowInteropHelper(this).Handle;
 
-            var hWnd = windowHandle;
-            RegisterHotKey(hWnd, 0, MOD_SHIFT | MOD_ALT, VK_Z); // ID for the hotkey is 0
+            RegisterHotKey(_windowHandle, 0, MOD_SHIFT | MOD_ALT, VK_Z); // ID for the hotkey is 0
             ComponentDispatcher.ThreadFilterMessage += new ThreadMessageEventHandler(ComponentDispatcherThreadFilterMessage);
 
             // Start listening to clipboard changes
-            AddClipboardFormatListener(windowHandle);
+            AddClipboardFormatListener(_windowHandle);
             
             if (IsUserLoggedIn())
             {
                 await InitSignalRClient();
                 await GetUserClipboard();
+
+                if (!_isHookAdded)
+                {
+                    _isHookAdded = true;
+                    HwndSource.FromHwnd(_windowHandle)?.AddHook(WndProc);
+                }
             }
 
             Hide();
@@ -291,7 +308,7 @@ namespace Memoryboard
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             // Stop listening to clipboard changes
-            RemoveClipboardFormatListener(windowHandle);
+            RemoveClipboardFormatListener(_windowHandle);
         }
 
         private void OnDeactivated(object sender, EventArgs e)
@@ -301,9 +318,16 @@ namespace Memoryboard
         }
         private async void OnClosed(object sender, EventArgs e)
         {
+
             // Unregister the hotkey
-            IntPtr handle = new WindowInteropHelper(this).Handle;
-            UnregisterHotKey(handle, 0);
+            if (_isHookAdded)
+            {
+                _isHookAdded = false;
+                HwndSource.FromHwnd(_windowHandle)?.RemoveHook(WndProc);
+            }
+
+            RemoveClipboardFormatListener(_windowHandle);
+            UnregisterHotKey(_windowHandle, 0);
             await DisposeSignalRClient();
         }
 
