@@ -6,7 +6,7 @@ namespace Memoryboard
     {
         private static readonly HttpClient _httpClient = new()
         {
-            BaseAddress = new Uri("https://localhost:7193/api/")
+            BaseAddress = new Uri("https://memoryboard-api.fly.dev/api/")
         };
 
         public static HttpClient Instance => _httpClient; // Access the singleton HttpClient

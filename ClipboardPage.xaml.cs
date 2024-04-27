@@ -36,6 +36,11 @@ namespace Memoryboard
                 {
                     lastCopied = text;
 
+                    if (text.Length > 1000)
+                    {
+                        text = text[..1000];
+                    }
+
                     if (ClipboardList.Items.Count == 50)
                     {
                         Dispatcher.Invoke(() => ClipboardList.Items.RemoveAt(49));

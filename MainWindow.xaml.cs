@@ -170,7 +170,7 @@ namespace Memoryboard
 
         private async Task InitSignalRClient()
         {
-            _signalRClient = new ClipboardSignalRClient("https://localhost:7193/hubs/clipboard", _token);
+            _signalRClient = new ClipboardSignalRClient("https://memoryboard-api.fly.dev/hubs/clipboard", _token);
             _signalRClient.BroadcastCopyReceived += OnBroadcastCopyReceived;
             _signalRClient.BroadcastSelectReceived += OnBroadcastSelectReceived;
             _signalRClient.BroadcastClearAllReceived += OnBroadcastClearAllReceived;
