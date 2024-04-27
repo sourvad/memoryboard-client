@@ -4,7 +4,7 @@ namespace Memoryboard
 {
     public class ClipboardSignalRClient(string hubUrl, string token)
     {
-        public event Action<string> BroadcastCopyReceived;
+        public event Action<byte[]> BroadcastCopyReceived;
         public event Action<int> BroadcastSelectReceived;
         public event Action BroadcastClearAllReceived;
 
@@ -21,7 +21,7 @@ namespace Memoryboard
             await _hubConnection.StartAsync();
 
             // Handle events from server below
-            _hubConnection.On<string>("BroadcastCopy", BroadcastCopyReceived.Invoke);
+            _hubConnection.On<byte[]>("BroadcastCopy", BroadcastCopyReceived.Invoke);
             _hubConnection.On<int>("BroadcastSelect", BroadcastSelectReceived.Invoke);
             _hubConnection.On("BroadcastClearAll", BroadcastClearAllReceived);
         }
@@ -31,9 +31,9 @@ namespace Memoryboard
             await _hubConnection.StopAsync();
         }
 
-        public void SendCopyEvent(string copiedText)
+        public void SendCopyEvent(byte[] encryptedBytes)
         {
-            _hubConnection.InvokeAsync("Copy", copiedText);
+            _hubConnection.InvokeAsync("Copy", encryptedBytes);
         }
 
         public void SendSelectEvent(int selectedIndex)

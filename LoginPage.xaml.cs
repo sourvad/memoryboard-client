@@ -1,9 +1,8 @@
-﻿using System.Text;
+﻿using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
-using System.Net.Http;
-using System.Text.Json;
-using System.Net.Mail;
 
 namespace Memoryboard
 {
@@ -73,6 +72,7 @@ namespace Memoryboard
                 {
                     _parentWindow.StoreToken(token); // Hide the parent window
                     _parentWindow.NavigateTo(Pages.Clipboard);
+                    _parentWindow.SetUserPassword(password);
                 }
                 else
                 {

@@ -1,11 +1,12 @@
-﻿using System.Windows;
-using System.Windows.Interop;
-using System.Runtime.InteropServices;
-using System.Windows.Input;
-using System.IO;
+﻿using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Interop;
 
 namespace Memoryboard
 {
@@ -18,19 +19,18 @@ namespace Memoryboard
         private readonly ClipboardPage _clipboardPage;
         private readonly LoginPage _loginPage;
         private readonly RegisterPage _registerPage;
+        private readonly string _tokenFilePath;
 
         private const int WM_CLIPBOARDUPDATE = 0x031D;
-        private const int MOD_WIN = 0x0008;
-        private const int VK_V = 0x56;
+        private const int MOD_SHIFT = 0x4; 
+        private const int MOD_ALT = 0x1;   
+        private const int VK_Z = 0x5A;     
         private const int WM_HOTKEY = 0x0312;
 
-        private readonly string _tokenFilePath;
-        private string _token;
-
-
         private ClipboardSignalRClient _signalRClient;
-
         private IntPtr windowHandle;
+        private byte[] _userPasswordBytes;
+        private string _token;
 
         [LibraryImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -79,12 +79,12 @@ namespace Memoryboard
 
             if (!Directory.Exists(directoryPath))
             {
-                Directory.CreateDirectory(directoryPath); 
+                Directory.CreateDirectory(directoryPath);
             }
 
             File.WriteAllText(_tokenFilePath, token);
             _token = token;
-            
+
             if (_signalRClient != null)
             {
                 await DisposeSignalRClient();
@@ -115,6 +115,7 @@ namespace Memoryboard
             await DisposeSignalRClient();
             DeleteToken();
             ContentPlaceholder.Navigate(_loginPage);
+            _userPasswordBytes = null;
         }
 
         public void DeleteToken()
@@ -122,13 +123,14 @@ namespace Memoryboard
             if (File.Exists(_tokenFilePath))
             {
                 File.Delete(_tokenFilePath);
-                _token = string.Empty;
             }
+
+            _token = string.Empty;
         }
 
         public void SendCopyEvent(string copiedText)
         {
-            _signalRClient.SendCopyEvent(copiedText);
+            _signalRClient.SendCopyEvent(AESHelper.Encrypt(copiedText, _userPasswordBytes));
         }
 
         public void SendSelectEvent(int selectedIndex)
@@ -139,6 +141,11 @@ namespace Memoryboard
         public void SendClearAllEvent()
         {
             _signalRClient.SendClearAllEvent();
+        }
+
+        public void SetUserPassword(string password)
+        {
+            _userPasswordBytes = Encoding.UTF8.GetBytes(password);
         }
 
         private async Task GetUserClipboard()
@@ -152,7 +159,10 @@ namespace Memoryboard
             if (response.IsSuccessStatusCode)
             {
                 string responseBody = await response.Content.ReadAsStringAsync();
-                List<string> clipboardItems = JsonSerializer.Deserialize<List<string>>(responseBody);
+                List<byte[]> clipboardItemsEncrypted = JsonSerializer.Deserialize<List<byte[]>>(responseBody);
+                List<string> clipboardItems = clipboardItemsEncrypted
+                    .Select(encryptedBytes => AESHelper.Decrypt(encryptedBytes, _userPasswordBytes))
+                    .ToList();
 
                 _clipboardPage.PopulateClipboard(clipboardItems);
             }
@@ -173,9 +183,9 @@ namespace Memoryboard
             _signalRClient = null;
         }
 
-        private void OnBroadcastCopyReceived(string copiedText)
+        private void OnBroadcastCopyReceived(byte[] encryptedBytes)
         {
-            _clipboardPage.BroadcastCopyReceived(copiedText);
+            _clipboardPage.BroadcastCopyReceived(AESHelper.Decrypt(encryptedBytes, _userPasswordBytes));
         }
 
         private void OnBroadcastSelectReceived(int selectedIndex)
@@ -216,15 +226,15 @@ namespace Memoryboard
         private async void OnLoaded(object sender, RoutedEventArgs e)
         {
             windowHandle = new WindowInteropHelper(this).Handle;
-            HwndSource.FromHwnd(windowHandle)?.AddHook(WndProc);
+            HwndSource.FromHwnd(windowHandle)?.AddHook(WndProc);        
 
             var hWnd = windowHandle;
-            RegisterHotKey(hWnd, 0, MOD_WIN, VK_V); // ID for the hotkey is 0
+            RegisterHotKey(hWnd, 0, MOD_SHIFT | MOD_ALT, VK_Z); // ID for the hotkey is 0
             ComponentDispatcher.ThreadFilterMessage += new ThreadMessageEventHandler(ComponentDispatcherThreadFilterMessage);
 
             // Start listening to clipboard changes
             AddClipboardFormatListener(windowHandle);
-
+            
             if (IsUserLoggedIn())
             {
                 await InitSignalRClient();

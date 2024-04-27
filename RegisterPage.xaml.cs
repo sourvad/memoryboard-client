@@ -1,9 +1,8 @@
-﻿using System.Windows;
-using System.Net.Http;
-using System.Text.Json;
-using System.Windows.Controls;
-using System.Net.Mail;
+﻿using System.Net.Http;
 using System.Text;
+using System.Text.Json;
+using System.Windows;
+using System.Windows.Controls;
 
 namespace Memoryboard
 {
@@ -65,7 +64,7 @@ namespace Memoryboard
 
             return isValidEmail;
         }
-        
+
         private bool IsValidPassword()
         {
             string password = PasswordBox.Password;
@@ -128,6 +127,7 @@ namespace Memoryboard
                 {
                     _parentWindow.StoreToken(token);
                     _parentWindow.NavigateTo(Pages.Clipboard);
+                    _parentWindow.SetUserPassword(password);
                 }
                 else
                 {
