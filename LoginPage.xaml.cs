@@ -70,9 +70,10 @@ namespace Memoryboard
 
                 if (!string.IsNullOrEmpty(token))
                 {
-                    _parentWindow.StoreToken(token); // Hide the parent window
+                    _parentWindow.StoreToken(token);
                     _parentWindow.NavigateTo(Pages.Clipboard);
                     _parentWindow.SetUserPassword(password);
+                    _parentWindow.Initialize();
                 }
                 else
                 {

@@ -128,6 +128,7 @@ namespace Memoryboard
                     _parentWindow.StoreToken(token);
                     _parentWindow.NavigateTo(Pages.Clipboard);
                     _parentWindow.SetUserPassword(password);
+                    _parentWindow.Initialize();
                 }
                 else
                 {

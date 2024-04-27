@@ -20,6 +20,7 @@ namespace Memoryboard
         private readonly LoginPage _loginPage;
         private readonly RegisterPage _registerPage;
         private readonly string _tokenFilePath;
+        private readonly string _passwordFilePath;
 
         private const int WM_CLIPBOARDUPDATE = 0x031D;
         private const int MOD_SHIFT = 0x4; 
@@ -57,6 +58,7 @@ namespace Memoryboard
             Closed += OnClosed;
 
             _tokenFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Memoryboard", "userToken.txt");
+            _passwordFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Memoryboard", "userPassword.txt");
             _clipboardPage = new ClipboardPage();
             _loginPage = new LoginPage();
             _registerPage = new RegisterPage();
@@ -73,7 +75,7 @@ namespace Memoryboard
             _httpClient = HttpClientSingleton.Instance;
         }
 
-        public async void StoreToken(string token)
+        public void StoreToken(string token)
         {
             string directoryPath = Path.GetDirectoryName(_tokenFilePath);
 
@@ -84,14 +86,17 @@ namespace Memoryboard
 
             File.WriteAllText(_tokenFilePath, token);
             _token = token;
+        }
 
+        public async void Initialize()
+        {
             if (_signalRClient != null)
             {
                 await DisposeSignalRClient();
             }
 
-            await GetUserClipboard();
             await InitSignalRClient();
+            await GetUserClipboard();
         }
 
         public void NavigateTo(Pages page)
@@ -113,12 +118,13 @@ namespace Memoryboard
         public async void Logout()
         {
             await DisposeSignalRClient();
+            DeletePassword();
             DeleteToken();
             ContentPlaceholder.Navigate(_loginPage);
             _userPasswordBytes = null;
         }
 
-        public void DeleteToken()
+        private void DeleteToken()
         {
             if (File.Exists(_tokenFilePath))
             {
@@ -126,6 +132,16 @@ namespace Memoryboard
             }
 
             _token = string.Empty;
+        }
+
+        private void DeletePassword()
+        {
+            if (File.Exists(_passwordFilePath))
+            {
+                File.Delete(_passwordFilePath);
+            }
+
+            _userPasswordBytes = default;
         }
 
         public void SendCopyEvent(string copiedText)
@@ -146,6 +162,15 @@ namespace Memoryboard
         public void SetUserPassword(string password)
         {
             _userPasswordBytes = Encoding.UTF8.GetBytes(password);
+
+            string directoryPath = Path.GetDirectoryName(_passwordFilePath);
+
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
+            File.WriteAllText(_passwordFilePath, password);
         }
 
         private async Task GetUserClipboard()
@@ -200,27 +225,46 @@ namespace Memoryboard
 
         private bool IsUserLoggedIn()
         {
+            bool isValidToken = false;
+            bool isValidPassword = false;
+
             if (File.Exists(_tokenFilePath))
             {
                 string storedToken = File.ReadAllText(_tokenFilePath);
 
                 if (!string.IsNullOrEmpty(storedToken))
                 {
-                    bool isValidToken = JwtTokenHandler.IsTokenExpired(storedToken);
+                    isValidToken = JwtTokenHandler.IsTokenExpired(storedToken);
 
                     if (isValidToken)
                     {
                         _token = storedToken;
-                        return true;
                     }
                     else
                     {
+                        DeletePassword();
                         DeleteToken();
                     }
                 }
             }
 
-            return false;
+            if (File.Exists(_passwordFilePath))
+            {
+                string storedPassword = File.ReadAllText(_passwordFilePath);
+
+                if (!string.IsNullOrEmpty(storedPassword))
+                {
+                    _userPasswordBytes = Encoding.UTF8.GetBytes(storedPassword);
+                    isValidPassword = true;
+                }
+                else
+                {
+                    DeletePassword();
+                    DeleteToken();
+                }
+            }
+
+            return isValidPassword && isValidToken;
         }
 
         private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -267,8 +311,8 @@ namespace Memoryboard
         {
             if (msg == WM_CLIPBOARDUPDATE)
             {
-                _clipboardPage.OnClipboardChanged();
                 handled = true;
+                _clipboardPage.OnClipboardChanged();
             }
 
             return IntPtr.Zero;
